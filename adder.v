@@ -8,8 +8,8 @@ module adder (
     output reg signed [18:0] distance
 );
 
-    always @ (posedge clk or negedge rst) begin
-        if(!rst) begin
+    always @ (posedge clk ) begin
+        if(rst) begin
             distance <= 0;
         end else begin
             distance <= dx_sq + dy_sq; // Sum of squares 

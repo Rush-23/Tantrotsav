@@ -11,8 +11,8 @@ module latency_counter #(
     output reg              running
 );
 
-    always @(posedge clk or negedge reset) begin
-        if (!reset) begin
+    always @(posedge clk ) begin
+        if (reset) begin
             latency <= 0;
             running <= 0;
         end

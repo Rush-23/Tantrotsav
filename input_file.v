@@ -17,9 +17,11 @@ module input_file (
     // Registers to store the "previous" state of the buttons
     reg btn_start_d;
     reg btn_toggle_d;
+    reg btn_load_x_d;
+    reg btn_load_y_d;
 
-    always @(posedge clk or negedge reset) begin
-        if (!reset) begin
+    always @(posedge clk) begin
+        if (reset) begin
             x_input <= 0;
             y_input <= 0;
             start   <= 0;
@@ -31,13 +33,15 @@ module input_file (
             // 1. Capture the previous state of the buttons
             btn_start_d  <= btn_start;
             btn_toggle_d <= btn_toggle_k;
+            btn_load_x_d <= btn_load_x;
+            btn_load_y_d <= btn_load_y;
 
             // 2. Default Start to 0 (It should only be 1 for a single cycle)
             start <= 0;
 
             // 3. Load Logic (Level sensitive is fine here)
-            if (btn_load_x) x_input <= 8'b00010000; // For testing, we can hardcode a value instead of using the switches
-            if (btn_load_y) y_input <= 8'b00010000; // For testing, we can hardcode a value instead of using the switches
+            if (btn_load_x_d) x_input <= switches; // For testing, we can hardcode a value instead of using the switches
+            if (btn_load_y_d) y_input <= switches; // For testing, we can hardcode a value instead of using the switches
             //K_mode <= 1'b0;
 
 

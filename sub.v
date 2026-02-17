@@ -17,8 +17,8 @@ module sub (
 );
 
     // Pipeline register stage
-    always @(posedge clk or negedge rst) begin
-        if (!rst) begin
+    always @(posedge clk) begin
+        if (rst) begin
             dx <= 0;
             dy <= 0;
         end else begin

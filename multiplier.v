@@ -13,8 +13,8 @@ module multiplier (
 );
 
     // Pipeline register stage
-    always @(posedge clk or negedge rst) begin
-        if (!rst) begin
+    always @(posedge clk) begin
+        if (rst) begin
             dx_sq <= 0;
             dy_sq <= 0;
         end else begin
