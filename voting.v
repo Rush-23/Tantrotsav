@@ -56,16 +56,22 @@ module voting (
         end
 
         // Argmax
-        predicted_class = 2'd0;
+        max_votes = c0;
+        if (c1 > max_votes) max_votes = c1;
+        if (c2 > max_votes) max_votes = c2;
+        if (c3 > max_votes) max_votes = c3;
 
-        
-
-        if (c1 > c0 && c1 >= c2 && c1 >= c3)
-            predicted_class = 2'd1;
-        else if (c2 > c0 && c2 > c1 && c2 >= c3)
-            predicted_class = 2'd2;
-        else if (c3 > c0 && c3 > c1 && c3 > c2)
-            predicted_class = 2'd3;
-    end
+        // 2. Identify if there is a tie for the top spot
+        // A tie exists if more than one class has 'max_votes'
+        if (( (c0 == max_votes) + (c1 == max_votes) + (c2 == max_votes) + (c3 == max_votes) ) > 1) begin
+            // TIE BREAKER: Priority goes to the single closest neighbor
+            predicted_class = class1;
+        end else begin
+            // CLEAR MAJORITY: Standard Argmax logic
+            if      (c0 == max_votes) predicted_class = 2'd0;
+            else if (c1 == max_votes) predicted_class = 2'd1;
+            else if (c2 == max_votes) predicted_class = 2'd2;
+            else                      predicted_class = 2'd3;
+        end
 
 endmodule
