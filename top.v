@@ -29,7 +29,7 @@ module top (
         .K_mode(K_mode)
     );
 
-    wire class1, class2, class3, class4, class5;
+    wire [1:0] class1, class2, class3, class4, class5;
     wire done;
     wire [5:0]   debug_addr;
 
@@ -50,7 +50,7 @@ module top (
         .debug_addr(debug_addr) // Optional: Connect to LEDs for debugging
     );
 
-    wire predicted_class;
+    wire [1:0] predicted_class;
 
     // Voting Logic: Decides the class based on the Top 5 distances [cite: 96]
     voting vote (
@@ -75,7 +75,7 @@ module top (
         .latency(latency),
         .running(running)
     );
-wire lat;
+
     // =========================================================
     // ZEDBOARD LED MAPPING
     // =========================================================
@@ -85,19 +85,17 @@ wire lat;
     // LD7-LD2: Shows the lower bits of the latency counter. 
     // With dual-port, you should see this value drop by ~50%.
     assign leds[7:2] = latency[5:0];    // LD2-LD7: Displays latency bits [cite: 103]*/
-if (latency <= 16'd40 && latency >= 16'd30) begin
-    assign lat = 1'b1; // Green for 30-40 cycles
-end else
-    assign lat = 1'b0;
 
 
-
-assign leds[0] = start;
+/*assign leds[0] = start;
 assign leds[1] = running;
 assign leds[2] = done;
 assign leds[3] = reset;
 assign leds[4] = predicted_class;
-assign leds[7] = lat;
-assign leds[6:5] = debug_addr[1:0];
+assign leds[7:5] = debug_addr[2:0];*/
+
+assign leds[1:0] = predicted_class; // LD0-LD1: Result (00=Class A, 01=Class B, 10=Class C, 11=Class D)
+assign leds[2]   = K_mode;          // LD2: K-Mode (Off=K3, On=K5) '
+assign leds[7:3] = 5'b00000;     // LD3-LD7: Unused (Set to 0)
 
 endmodule

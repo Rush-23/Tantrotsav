@@ -53,7 +53,9 @@ module input_file (
 
             // 5. Toggle Logic: Rising Edge Detector
             // Prevents K_mode from flickering back and forth rapidly
-            if (btn_toggle_k && !btn_toggle_d) begin
+            if (reset) begin
+                K_mode <= 0; // Ensure K_mode resets to a known state
+            end else if (!btn_toggle_k &&  btn_toggle_d) begin
                 K_mode <= ~K_mode;
             end
         end

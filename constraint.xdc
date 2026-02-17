@@ -81,6 +81,8 @@
 # ---------------------------------------------------------------------------- 
 set_property PACKAGE_PIN Y9 [get_ports {clk}];  # "GCLK"
 set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets rst_IBUF];
+create_clock -period 10.000 -name sys_clk_pin -waveform {0.000 5.000} -add [get_ports clk];
+set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets rst_IBUF];
 # ----------------------------------------------------------------------------
 # JA Pmod - Bank 13 
 # ---------------------------------------------------------------------------- 

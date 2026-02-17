@@ -4,16 +4,20 @@ module distance_engine_top (
     input  wire start, 
     input  wire signed [7:0] x_input, 
     input  wire signed [7:0] y_input, 
-    output wire class1, class2, class3, class4, class5, 
+    output wire [1:0] class1,
+    output wire [1:0] class2,
+    output wire [1:0] class3,
+    output wire [1:0] class4,
+    output wire [1:0] class5,
     output reg  done,
-    output wire [5:0] debug_addr
+    output wire [9:0] debug_addr
 
 );
 
     // =============================
     // Address Counter (Updated for +2)
     // =============================
-    reg [5:0] addr; 
+    reg [9:0] addr; 
     reg running; 
     assign debug_addr = addr; // Expose address for debugging
     
@@ -21,28 +25,29 @@ module distance_engine_top (
     reg valid_s1, valid_s2, valid_s3, valid_s4;
 
     always @(posedge clk) begin
-    if (reset) begin
-        addr    <= 0;
-        running <= 0;
-        done    <= 0;
-    end 
-    else begin
-        if (start) begin
+        if (reset) begin
             addr    <= 0;
-            running <= 1;
+            running <= 0;
             done    <= 0;
-        end
+        end 
+        else begin
+            if (start) begin
+                addr    <= 0;
+                running <= 1;
+                done    <= 0;
+            end
+            else if (running) begin
+                // Dual-port: increment by 2
+                addr <= addr + 2;
 
-        else if (running) begin
-            addr <= addr + 2;
+                // Stop at 1022 (so next +1 covers 1023)
+                // 1024 samples total -> Indices 0 to 1023
+                if (addr == 10'd1022) 
+                    running <= 0;
+            end
 
-            if (addr == 6'd62)
-                running <= 0;
-        end
-
-        // PIPELINE FLUSH → completion detect
-        if (valid_s4 && !running)
-            done <= 1;
+            // Completion signal
+            done <= (valid_s4 && !running); 
         end
     end
 
@@ -65,19 +70,19 @@ module distance_engine_top (
     // Pipeline A Signals
     wire signed [7:0] x_train_a = bram_data_a[17:10]; 
     wire signed [7:0] y_train_a = bram_data_a[9:2]; 
-    wire              class_raw_a = bram_data_a[1]; 
+    wire [1:0] class_raw_a = bram_data_a[1:0]; 
 
     // Pipeline B Signals
     wire signed [7:0] x_train_b = bram_data_b[17:10];
     wire signed [7:0] y_train_b = bram_data_b[9:2];
-    wire              class_raw_b = bram_data_b[1];
+    wire [1:0] class_raw_b = bram_data_b[1:0];
 
     // =============================
     // Pipeline Alignment (Two Channels)
     // =============================
-    reg class_a_d1, class_a_d2, class_a_d3;
-    reg class_b_d1, class_b_d2, class_b_d3;
-    
+    reg [1:0] class_a_d1, class_a_d2, class_a_d3;
+    reg [1:0] class_b_d1, class_b_d2, class_b_d3;
+
     always @(posedge clk) begin
         if(reset) begin
             {class_a_d1, class_a_d2, class_a_d3} <= 0; 
