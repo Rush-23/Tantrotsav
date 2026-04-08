@@ -1,0 +1,1 @@
+LinkedIn Post: https://www.linkedin.com/posts/indiran-t-003495305_hardware-accelerated-knn-classifier-on-fpga-ugcPost-7433159392746754048-nkRh?utm_source=share&utm_medium=member_desktop&rcm=ACoAAB0n350BI9KPtM1-62gKCNUw4jZDWbTooQE
