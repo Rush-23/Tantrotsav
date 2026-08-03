@@ -1,20 +1,277 @@
 # Hardware-Accelerated K-Nearest Neighbors (KNN) Classifier on FPGA
 
-> **2nd Place Winner** – DREAM-Amrita VLSI Hardware Hackathon (Tantrotsav Techfest)
+> 🥈 **2nd Place Winner** – DREAM-Amrita VLSI Hardware Hackathon (Tantrotsav Techfest)
 
-A high-performance, RTL-based implementation of the **K-Nearest Neighbors (KNN)** classification algorithm on the **ZedBoard (Xilinx Zynq-7000 SoC)** using only the **Programmable Logic (PL)**.
+A fully RTL-based implementation of a **Hardware-Accelerated K-Nearest Neighbors (KNN) Classifier** on the **ZedBoard (Xilinx Zynq-7000 FPGA)**.
 
-The design demonstrates how a computationally intensive machine learning algorithm can be transformed into a hardware accelerator through parallelism, pipelining, BRAM optimization, and custom sorting architectures.
+The complete classifier was designed using **Verilog HDL** without utilizing the ARM Processing System (PS), demonstrating how a classical machine learning algorithm can be efficiently accelerated using FPGA parallelism, pipelining, and optimized memory architecture.
 
 ---
 
-## 🏆 Achievement
+## 📌 Project Overview
+
+The objective of this project was to implement the **K-Nearest Neighbors (KNN)** algorithm entirely in FPGA hardware.
+
+Unlike software implementations that sequentially compute distances for every training sample, this architecture exploits FPGA parallelism to evaluate multiple samples simultaneously while maintaining the nearest neighbours in real time.
+
+### Features
+
+- Fully RTL implementation in Verilog
+- Pure Programmable Logic (PL) design
+- Runtime configurable **K (3 or 5)**
+- 1024 preloaded training samples
+- True Dual-Port BRAM
+- Parallel distance computation
+- Streaming Top-K sorter
+- Majority voting classifier
+- High-frequency operation at **142 MHz**
+
+---
+
+# Hardware Platform
+
+| Component | Specification |
+|-----------|---------------|
+| FPGA Board | ZedBoard |
+| FPGA | Xilinx Zynq-7000 SoC |
+| Language | Verilog HDL |
+| Design Methodology | RTL |
+| Processing System | Not Used |
+| Clock Frequency | 142 MHz |
+
+---
+
+# Dataset
+
+The classifier stores **1024 training samples** in on-chip Block RAM.
+
+Each sample consists of:
+
+- Age (8 bits)
+- Heart Rate (8 bits)
+- Class Label (2 bits)
+
+The dataset is implemented using **True Dual-Port BRAM**, enabling two samples to be accessed simultaneously each clock cycle.
+
+---
+
+# System Architecture
+
+```text
+                 Input Switches
+                       │
+                       ▼
+               Input Controller
+                       │
+                       ▼
+              ┌───────────────────┐
+              │  Dual-Port BRAM   │
+              │ 1024 Samples       │
+              └───────────────────┘
+                  │          │
+                  ▼          ▼
+          Distance Engine A  Distance Engine B
+                  │          │
+                  └────┬─────┘
+                       ▼
+             Top-K Distance Selector
+                 (Streaming Insert)
+                       │
+                       ▼
+                Majority Voting
+                       │
+                       ▼
+               Classification Output
+```
+
+---
+
+# Module Description
+
+## `top.v`
+
+Top-level module integrating all components of the classifier.
+
+---
+
+## `input_file.v`
+
+Handles user interaction through switches and push buttons.
+
+Responsibilities:
+
+- Input feature loading
+- Start signal generation
+- Runtime K selection
+- Input synchronization
+
+---
+
+## `memory.v`
+
+Implements the training dataset using inferred **True Dual-Port BRAM**.
+
+Features:
+
+- 1024 stored samples
+- Two simultaneous memory reads
+- Continuous data streaming
+
+---
+
+## `distance_engine_top.v`
+
+Coordinates the complete inference pipeline.
+
+Functions:
+
+- Memory address generation
+- Pipeline synchronization
+- Distance computation control
+- Valid signal generation
+- Completion detection
+
+---
+
+## Distance Computation Pipeline
+
+The Euclidean distance is calculated using a three-stage pipeline.
+
+### `sub.v`
+
+Computes feature differences:
+
+```text
+dx = x_input − x_train
+dy = y_input − y_train
+```
+
+---
+
+### `multiplier.v`
+
+Squares each difference:
+
+```text
+dx²
+dy²
+```
+
+---
+
+### `adder.v`
+
+Computes the squared Euclidean distance:
+
+```text
+Distance = dx² + dy²
+```
+
+---
+
+## Parallel Distance Computation
+
+Two identical distance pipelines operate simultaneously.
+
+Each clock cycle:
+
+- Pipeline A processes one dataset sample
+- Pipeline B processes another dataset sample
+
+This doubles throughput while reducing overall inference latency.
+
+---
+
+## `k_sel.v`
+
+Maintains the **Top-5 smallest distances** during execution.
+
+Instead of sorting after all distances are computed, each new distance is inserted into its correct position immediately.
+
+Benefits:
+
+- Streaming operation
+- Constant storage
+- Lower latency
+- Reduced hardware complexity
+
+---
+
+## `voting.v`
+
+Performs majority voting using the selected nearest neighbours.
+
+Supports:
+
+- K = 3
+- K = 5
+
+Outputs the predicted class label.
+
+---
+
+## `latency_counter.v`
+
+Measures the complete inference latency between:
+
+- Start signal
+- Classification complete
+
+---
+
+# Performance
+
+| Metric | Value |
+|---------|------:|
+| Clock Period | 7 ns |
+| Maximum Frequency | ~142 MHz |
+| Positive Timing Slack | 3.6 ns |
+| Inference Latency | 34 Clock Cycles |
+| Total Execution Time | ~340 ns |
+
+---
+
+# Project Structure
+
+```text
+.
+├── top.v
+├── distance_engine_top.v
+├── memory.v
+├── input_file.v
+├── sub.v
+├── multiplier.v
+├── adder.v
+├── k_sel.v
+├── voting.v
+├── latency_counter.v
+├── tb.v
+├── constraint.xdc
+└── README.md
+```
+
+---
+
+# FPGA Optimizations
+
+- True Dual-Port BRAM inference
+- Parallel distance computation
+- Fully pipelined arithmetic datapath
+- Streaming Top-K insertion sorter
+- Runtime configurable K
+- Timing optimized RTL implementation
+- High-frequency operation at 142 MHz
+
+---
+
+# Results
 
 - 🥈 **2nd Place** among **14 teams**
-- Organized by **DREAM-Amrita** as part of **Tantrotsav Techfest**
-- Implemented entirely in **RTL**
-- **Processing System (PS) was not allowed**
-- Target Platform: **ZedBoard (Zynq-7000 SoC)**
+- Fully RTL implementation without ARM processor support
+- Successful hardware acceleration of the KNN algorithm
+- **34-clock-cycle** inference latency
+- **~340 ns** total execution time
+- Significant acceleration over the reference Python implementation through hardware parallelism
 
 ---
 
@@ -24,317 +281,24 @@ The design demonstrates how a computationally intensive machine learning algorit
 |---------|--------------|
 | **Rushil V** | Architecture Design, RTL Development |
 | **Charan Karthick** | Architecture Design, RTL Development |
-| **Sathiya Naarayanan Chandrasekaran** | RTL Support, Dataset Preparation, Validation, Presentation |
-| **Team Member** | RTL Support, Dataset Preparation, Validation, Presentation |
-
----
-
-# Project Overview
-
-The objective was to design a fully hardware-based implementation of the **K-Nearest Neighbors (KNN)** algorithm capable of classifying an input vector with minimal latency.
-
-Unlike software implementations that process one dataset element at a time, this design exploits the inherent parallelism of FPGA hardware to significantly accelerate computation.
-
-The complete classifier—including distance computation, sorting, and classification—was implemented using synthesizable Verilog RTL.
-
----
-
-# Features
-
-- Fully RTL-based implementation
-- No ARM processor (PS) usage
-- Hardware configurable **K** value
-- Parallel distance computation
-- Dual-port BRAM based dataset storage
-- Systolic sorting architecture
-- Low-latency classification
-- Timing optimized for high-frequency operation
-
----
-
-# System Architecture
-
-```
-                 Input Switches
-                        │
-                        ▼
-              Input Vector Register
-                        │
-                        ▼
-          ┌─────────────────────────┐
-          │   Dual-Port BRAM        │
-          │ 64 Training Samples     │
-          └─────────────────────────┘
-              │               │
-              ▼               ▼
-      Distance Unit 1   Distance Unit 2
-              │               │
-              └──────┬────────┘
-                     ▼
-        Systolic Distance Sorter
-                     │
-                     ▼
-          K Nearest Neighbor List
-                     │
-                     ▼
-          Majority Voting Classifier
-                     │
-                     ▼
-             Classification Output
-```
-
----
-
-# Hardware Specifications
-
-| Parameter | Value |
-|-----------|------|
-| FPGA Board | ZedBoard |
-| FPGA | Xilinx Zynq-7000 |
-| Design Language | Verilog HDL |
-| Dataset Size | 64 Training Samples |
-| Distance Metric | Euclidean Distance (Squared) |
-| Memory | True Dual-Port BRAM |
-| Parallel Compute Units | 2 |
-| User Input | Hardware Switches |
-| Configurable K | Yes |
-
----
-
-# Design Methodology
-
-## 1. Dataset Storage
-
-The training dataset is preloaded into the FPGA's on-chip Block RAM.
-
-- 64 data points
-- Dual-port BRAM inference
-- Simultaneous access to two samples each clock cycle
-
----
-
-## 2. Parallel Distance Computation
-
-To improve throughput, two identical compute engines operate simultaneously.
-
-Each clock cycle:
-
-- Sample A → Distance Engine 1
-- Sample B → Distance Engine 2
-
-This effectively halves the number of memory accesses required compared to a single-engine architecture.
-
----
-
-## 3. Systolic Sorter
-
-Instead of storing all computed distances and sorting afterward, the design continuously maintains the nearest distances during computation.
-
-Advantages include:
-
-- Streaming operation
-- Reduced latency
-- No large sorting buffer
-- Lower hardware overhead
-
-Each newly computed distance is inserted into the correct position while previous distances shift through the systolic array.
-
----
-
-## 4. Classification
-
-After processing all dataset entries:
-
-1. Select the **K** nearest neighbors
-2. Perform majority voting
-3. Produce the predicted class
-
----
-
-# Performance
-
-## Timing Results
-
-| Metric | Value |
-|---------|------|
-| Initial Clock Period | 10 ns |
-| Positive Slack | +3.6 ns |
-| Optimized Clock Period | 7 ns |
-| Operating Frequency | ~142 MHz |
-
----
-
-## Latency
-
-| Metric | Value |
-|---------|------|
-| Clock Cycles | 34 |
-| Total Execution Time | ~340 ns |
-
----
-
-## Software Comparison
-
-The hardware implementation was compared against an equivalent Python implementation running on Google Colab.
-
-The FPGA implementation achieved substantial acceleration through:
-
-- Parallel computation
-- Dedicated hardware datapaths
-- Elimination of software overhead
-- Streaming architecture
-
----
-
-# FPGA Optimizations
-
-## True Dual-Port BRAM
-
-- Simultaneous read access
-- Doubled memory bandwidth
-- Reduced processing time
-
----
-
-## Parallel Compute Units
-
-Two identical distance computation modules execute concurrently.
-
-Benefits:
-
-- Increased throughput
-- Reduced execution latency
-- Improved resource utilization
-
----
-
-## Systolic Sorting
-
-Rather than waiting for all distances to be calculated:
-
-- Distances are inserted dynamically
-- Sorting occurs concurrently with computation
-- Eliminates expensive post-processing
-
----
-
-## Timing Optimization
-
-The RTL was optimized to meet timing at:
-
-- **142 MHz**
-- Positive timing closure
-- Stable synthesis and implementation
-
----
-
-# Project Structure
-
-```
-Hardware-Accelerated-KNN/
-│
-├── rtl/
-│   ├── knn_top.v
-│   ├── bram.v
-│   ├── distance_unit.v
-│   ├── systolic_sorter.v
-│   ├── majority_voter.v
-│   └── controller.v
-│
-├── constraints/
-│   └── constraints.xdc
-│
-├── dataset/
-│   └── dataset.mem
-│
-├── simulation/
-│   ├── testbench.v
-│   └── waveforms/
-│
-├── images/
-│
-├── docs/
-│
-└── README.md
-```
-
----
-
-# Tools Used
-
-- Vivado Design Suite
-- Verilog HDL
-- ZedBoard (Zynq-7000)
-- Python (Reference Model)
-- Google Colab (Software Validation)
-
----
-
-# Learning Outcomes
-
-This project provided hands-on experience in:
-
-- FPGA Architecture
-- RTL Design
-- Hardware Acceleration
-- Parallel Computing
-- Timing Closure
-- BRAM Inference
-- Systolic Architectures
-- Machine Learning Hardware Design
-- FPGA Optimization Techniques
-
----
-
-# Future Improvements
-
-Potential enhancements include:
-
-- Support for larger datasets using external DDR memory
-- Higher-dimensional feature vectors
-- Fully pipelined distance engine
-- Floating-point arithmetic support
-- AXI interface integration
-- DMA-based dataset loading
-- HLS implementation comparison
-- Dynamic dataset updates
-- Multi-class classifier support
-
----
-
-# Results
-
-✅ Fully functional RTL implementation
-
-✅ Parallel hardware accelerator
-
-✅ Runtime configurable K
-
-✅ Timing closed at **142 MHz**
-
-✅ **34 clock cycle** classification latency
-
-✅ **2nd Place** at the DREAM-Amrita Hardware Hackathon
+| **Sathiya Naarayanan Chandrasekaran** | RTL Support, Dataset Preparation, Validation |
+| **Noel** | RTL Support, Dataset Preparation, Validation, Presentation |
 
 ---
 
 # Acknowledgements
 
-We would like to sincerely thank:
-
-- **DREAM-Amrita** for organizing the VLSI Hardware Hackathon.
-- **Tantrotsav Techfest** for providing an excellent platform to innovate and compete.
-- The faculty members, mentors, judges, and volunteers for their guidance and support throughout the event.
+We sincerely thank **DREAM-Amrita** and the **Tantrotsav Techfest** organizing committee for conducting an excellent VLSI hardware hackathon. We are also grateful to the faculty members, mentors, and judges for their valuable guidance and support throughout the event.
 
 ---
 
 ## License
 
 This project is intended for educational and research purposes.
-Feel free to use the architecture and concepts with appropriate attribution.
 
 ---
 
-**Team XLR8-ers**  
-*Accelerating Machine Learning with FPGA Hardware*
+**Team XLR8-ers**
+
+*Accelerating Machine Learning with FPGA Hardware.*
 LinkedIn Post: https://www.linkedin.com/posts/indiran-t-003495305_hardware-accelerated-knn-classifier-on-fpga-ugcPost-7433159392746754048-nkRh?utm_source=share&utm_medium=member_desktop&rcm=ACoAAB0n350BI9KPtM1-62gKCNUw4jZDWbTooQE
