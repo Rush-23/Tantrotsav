@@ -281,7 +281,7 @@ Measures the complete inference latency between:
 |---------|--------------|
 | **Rushil V** | Architecture Design, RTL Development |
 | **Charan Karthick** | Architecture Design, RTL Development |
-| **Sathiya Naarayanan Chandrasekaran** | RTL Support, Dataset Preparation, Validation |
+| **Sathiya** | RTL Support, Dataset Preparation, Validation |
 | **Indiran** | RTL Support, Dataset Preparation, Validation, Presentation |
 
 ---
